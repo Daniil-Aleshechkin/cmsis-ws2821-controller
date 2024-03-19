@@ -30,7 +30,18 @@ void config_tim2(void) {
 	TIM2->SMCR &= ~TIM_SMCR_ETF; 
 	TIM2->SMCR &= ~TIM_SMCR_SMS; // No Slave mode
 	
+	//TIM2->CCMR1 &= ~TIM_CCMR1_OC1M; // Set the Tim2 channel 1 to PWM 1 output compare mode
+	//TIM2->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
 	
+	TIM2->CCMR1 &= ~TIM_CCMR1_OC2M; // Set the Tim2 channel 2 to PWM 1 output compare mode
+	TIM2->CCMR1 |= (TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1);
+	TIM2->CCMR1 &= ~TIM_CCMR1_OC2FE; // Disable OC fast mode
+	TIM2->CCMR1 |= TIM_CCMR1_OC2PE; // Set Preload enable
+	
+	TIM2->CCER &= ~TIM_CCER_CC2P; // High polarity
+	TIM2->CCER |= TIM_CCER_CC2E;
+	
+	TIM2->CCR2 = WS2812_TIMER_PWM_CH2_TIME;
 }
 
 void start_tim2(void) {
