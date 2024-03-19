@@ -3,6 +3,7 @@
 #include "dma.h"
 #include "gpio.h"
 #include "util.h"
+#include "stm32f10x.h"
 
 void fill_dma_buffer(uint16_t *dest, int pos, uint8_t* source);
 
@@ -19,13 +20,24 @@ void displayInit() {
 	config_DMA2();
 	config_DMA3();
 	
-	for (int i = 0; i < DISPLAY_FRAME_BUFFER_LENGTH; i++) {
-		display_frame_buffer[i] = (uint8_t)0;
+	for (int i = 0; i < DISPLAY_FRAME_BUFFER_LENGTH*3; i++) {
+		display_frame_buffer[i] = ~(uint8_t)0;
 	}
 }
 
 void bufferPixel(struct pixel p, int x, int y) {
-	// TODO: make the thing add to the framebuffer
+	int yshift;
+
+	if (x % 2 == 0) {
+			yshift = y;
+	} else {
+			yshift = DISPLAY_HEIGHT - y -1;
+	}
+	int index = yshift + DISPLAY_HEIGHT * x;
+
+	display_frame_buffer[index*3] = ~p.g;
+	display_frame_buffer[index*3+1] = ~p.r;
+	display_frame_buffer[index*3+2] = ~p.b;
 }
 
 void refreshDisplay() {
@@ -37,18 +49,19 @@ void refreshDisplay() {
 	
 	int pos = 0;
 	
-	int max_pos = DISPLAY_FRAME_BUFFER_LENGTH + DMA_BUFFER_SIZE; // A litter extra is added to give the dma some time to refresh last few bytes
+	int max_pos = (DISPLAY_FRAME_BUFFER_LENGTH*3) + DMA_BUFFER_SIZE + 2; // A litter extra is added to give the dma some time to refresh last few bytes
 	
 	fill_dma_buffer((uint16_t *)dma_buffer, pos, (uint8_t *)display_frame_buffer);
-	fill_dma_buffer((uint16_t *)dma_buffer, pos + 8, (uint8_t *)display_frame_buffer);
-	
+	fill_dma_buffer((uint16_t *)dma_buffer + 8, pos + 1, (uint8_t *)display_frame_buffer);
+	pos++;
+	pos++;
 	stop_all_dma_channels();
 	stop_tim2();
 	
 	// Begin reset timer
 	resetLED();
 	start_tim2();
-	for (int i = 0; i < 225; i++) {
+	for (int i = 0; i < 150; i++) {
 		while(!isTim2Updated());
 		resetTime2Update();
 	}
@@ -60,43 +73,41 @@ void refreshDisplay() {
 	
 	clearDMAEventFlags();
 	
+	preOverflowTim2();
 	// Begin the data transfer
 	start_tim2();
 	while (pos < max_pos) {
 		if (!isTransferComplete()) {
 			continue;
 		}
-		clearDMAEventFlags();
-		pos++;
+		
+		uint16_t *dest = dma_buffer;
+
+		/* Figure out if we're filling the first half of the DMA buffer, or the second half */
+		if (DMA1->ISR & DMA_ISR_TCIF5)
+				dest += 8;
+
+		/* Clear DMA event flags */
+		DMA1->IFCR = (DMA_IFCR_CTCIF5 | DMA_IFCR_CHTIF5);
+
+		/* Unpack one new byte from each channel, into eight words in our DMA buffer
+		 * Each 16-bit word in the DMA buffer contains to one bit of the output byte (from each channel)
+		 */
+		for (int i = 0; i < 8; i+= 8) {
+				fill_dma_buffer(dest + i, pos, display_frame_buffer);
+				pos++;
+		}
 	}
 	
 }
 
 void fill_dma_buffer(uint16_t *dest, int pos, uint8_t* source) {
-	// TODO: constant buffer for now, but we're going to make the full one later
-	
-	dest[0] = 1;
-	dest[1] = 1;
-	dest[2] = 1;
-	dest[3] = 1;
-	dest[4] = 1;
-	dest[5] = 1;
-	dest[6] = 1;
-	dest[7] = 1;
-	dest[8] = 0;
-	dest[9] = 0;
-	dest[10] = 0;
-	dest[11] = 0;
-	dest[12] = 0;
-	dest[13] = 0;
-	dest[14] = 0;
-	dest[15] = 0;
-	dest[16] = 1;
-	dest[17] = 1;
-	dest[18] = 1;
-	dest[19] = 1;
-	dest[20] = 1;
-	dest[21] = 1;
-	dest[22] = 1;
-	dest[23] = 1;
+	dest[0] = source[pos] & 0x1;
+	dest[1] = (source[pos] & 0x2) >> 1;
+	dest[2] = (source[pos] & 0x4) >> 2;
+	dest[3] = (source[pos] & 0x8) >> 3;
+	dest[4] = (source[pos] & 0x10) >> 4;
+	dest[5] = (source[pos] & 0x20) >> 5;
+	dest[6] = (source[pos] & 0x40) >> 6;
+	dest[7] = (source[pos] & 0x80) >> 7;
 }

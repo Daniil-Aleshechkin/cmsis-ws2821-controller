@@ -4,7 +4,7 @@
 #ifndef DMA_ws2821
 #define DMA_ws2821
 
-#define DMA_BUFFER_SIZE 24
+#define DMA_BUFFER_SIZE 16
 
 void config_DMA(void);
 
