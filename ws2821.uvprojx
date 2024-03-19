@@ -329,7 +329,7 @@
             <uC99>1</uC99>
             <uGnu>1</uGnu>
             <useXO>0</useXO>
-            <v6Lang>1</v6Lang>
+            <v6Lang>3</v6Lang>
             <v6LangP>1</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
@@ -428,6 +428,16 @@
               <FileName>tim2.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\tim2.c</FilePath>
+            </File>
+            <File>
+              <FileName>ws2821_display.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\ws2821_display.h</FilePath>
+            </File>
+            <File>
+              <FileName>ws2821_display.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ws2821_display.c</FilePath>
             </File>
           </Files>
         </Group>
