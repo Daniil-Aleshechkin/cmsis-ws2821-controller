@@ -3,4 +3,5 @@
 
 void config_gpio(void);
 
+void resetLED(void);
 #endif

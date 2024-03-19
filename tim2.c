@@ -62,3 +62,15 @@ void start_tim2(void) {
 void stop_tim2(void) {
 	TIM2->CR1 &= ~TIM_CR1_CEN;
 }
+
+void preOverflowTim2() {
+	TIM2->CNT = TIM2->ARR - 10;
+}
+
+bool isTim2Updated() {
+	return !((TIM2->SR & TIM_SR_UIF) == 0);
+}
+
+void resetTime2Update() {
+	TIM2->SR &= ~TIM_SR_UIF;
+}

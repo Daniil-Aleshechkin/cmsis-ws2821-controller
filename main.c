@@ -7,9 +7,11 @@ int main() {
 	
 	bufferPixel(red, 0, 0);
 	
-	refreshDisplay();
-	
+
 	while (1) {
+		__disable_irq();
+	refreshDisplay();
+	__enable_irq();
 	
 		__ASM volatile (
 			"NOP\n\t"

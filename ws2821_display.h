@@ -14,8 +14,8 @@ struct pixel {
 
 void bufferPixel(struct pixel, int x, int y);
 
-void refreshDisplay();
+void refreshDisplay(void);
 
-void displayInit();
+void displayInit(void);
 
 #endif
