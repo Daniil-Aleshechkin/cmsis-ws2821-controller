@@ -10,7 +10,7 @@ void fill_dma_buffer(uint16_t *dest, int pos, uint8_t* source);
 #define DISPLAY_FRAME_BUFFER_LENGTH DISPLAY_WIDTH*DISPLAY_HEIGHT
 
 // This is what will be sent to the ws2821. Each is a pixel value for G,R,B
-static uint8_t display_frame_buffer[DISPLAY_FRAME_BUFFER_LENGTH * 3];
+static uint8_t display_frame_buffer [DISPLAY_FRAME_BUFFER_LENGTH * 3];
 
 void displayInit() {
 	config_gpio();
@@ -49,7 +49,7 @@ void refreshDisplay() {
 	
 	int pos = 0;
 	
-	int max_pos = (DISPLAY_FRAME_BUFFER_LENGTH*3) + DMA_BUFFER_SIZE + 2; // A litter extra is added to give the dma some time to refresh last few bytes
+	int max_pos = (DISPLAY_FRAME_BUFFER_LENGTH*3) + 2; // A litter extra is added to give the dma some time to refresh last few bytes
 	
 	fill_dma_buffer((uint16_t *)dma_buffer, pos, (uint8_t *)display_frame_buffer);
 	fill_dma_buffer((uint16_t *)dma_buffer + 8, pos + 1, (uint8_t *)display_frame_buffer);
@@ -61,7 +61,7 @@ void refreshDisplay() {
 	// Begin reset timer
 	resetLED();
 	start_tim2();
-	for (int i = 0; i < 150; i++) {
+	for (int i = 0; i < 225; i++) {
 		while(!isTim2Updated());
 		resetTime2Update();
 	}
@@ -93,12 +93,12 @@ void refreshDisplay() {
 		/* Unpack one new byte from each channel, into eight words in our DMA buffer
 		 * Each 16-bit word in the DMA buffer contains to one bit of the output byte (from each channel)
 		 */
-		for (int i = 0; i < 8; i+= 8) {
-				fill_dma_buffer(dest + i, pos, display_frame_buffer);
-				pos++;
-		}
+		fill_dma_buffer(dest, pos, display_frame_buffer);
+		pos++;
 	}
-	
+	stop_tim2();
+	resetLED();
+	stop_all_dma_channels();
 }
 
 void fill_dma_buffer(uint16_t *dest, int pos, uint8_t* source) {
